@@ -3,6 +3,7 @@ from binance.enums import *
 from binance.exceptions import *
 from binance.websockets import BinanceSocketManager
 from twisted.internet import reactor
+from telethon import TelegramClient, events, sync
 import sys
 import math
 import json
@@ -85,8 +86,10 @@ if (apiKey == "") or (apiSecret == ""):
     print("One or Both of you API Keys are missing.\n"
     "Please open the keys.json to include them.")
     quitProgram()
-
+tg_api_id = data['tg_api_id']
+tg_api_hash = data['tg_api_hash']
 log("API keys successfully loaded.")
+
 log("Loading config.json settings.")
 f = open('config.json', )
 data = json.load(f)
@@ -99,6 +102,9 @@ profitMargin = float(data['profitMargin']) / 100
 stopLoss = float(data['stopLoss'])
 currentVersion = float(data['currentVersion'])
 endpoint = data['endpoint']
+tg_botname = data['tg_botname'],
+tg_watchgroup = data['tg_watchgroup'],
+tg_search = data['tg_search']
 log("config.json settings successfully loaded.")
 
 # check we have the latest version
@@ -198,7 +204,26 @@ print('''
 print("\nInvesting amount for {}: {}".format(quotedCoin, float_to_string(AmountToSell)))
 print("Investing amount in USD: {}".format(float_to_string((in_USD * AmountToSell), 2)))
 log("Waiting for trading pair input.")
-tradingPair = input("\nCoin pair: ").upper() + quotedCoin
+
+#---
+tgclient = TelegramClient('"{}"'.format(tg_botname), tg_api_id, tg_api_hash)
+print('\nScouting telegram channel', tg_watchgroup, 'for coin...')
+
+@tgclient.on(events.NewMessage(chats=tg_watchgroup))
+async def my_event_handler(event):
+    global coin #define global variable outside this private space
+    text = event.raw_text
+    match = re.search(rsearch, text)
+    if match:
+        coin = match.group(1) #fill variable
+        print ('Coin published:', coin) #temp
+        await tgclient.disconnect() #disconnect client, wait for it. NOTE: --can this be done async?--
+        
+tgclient.start()
+tgclient.run_until_disconnected()
+
+tradingPair = coin.upper() + quotedCoin
+#---
 
 # get price for coin
 averagePrice = 0
