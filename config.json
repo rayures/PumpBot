@@ -7,7 +7,7 @@
     "stopLoss": 0.90,
     "endpoint": "default",
     "tg_watchgroup": "TelegramGroupName",
-    "tg_search": "regex",
+    "tg_search": "r'(?<=#)(.*)'",
     "tg_botname": "UniqueBotName",
 
 
