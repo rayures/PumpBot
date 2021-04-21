@@ -4,6 +4,7 @@ from binance.exceptions import *
 from binance.websockets import BinanceSocketManager
 from twisted.internet import reactor
 from telethon import TelegramClient, events, sync
+import re
 import sys
 import math
 import json
@@ -102,9 +103,9 @@ profitMargin = float(data['profitMargin']) / 100
 stopLoss = float(data['stopLoss'])
 currentVersion = float(data['currentVersion'])
 endpoint = data['endpoint']
-tg_botname = data['tg_botname'],
-tg_watchgroup = data['tg_watchgroup'],
-tg_search = data['tg_search']
+tg_botname = print(data['tg_botname']),
+tg_watchgroup = print(data['tg_watchgroup']),
+tg_search = print(data['tg_search'])
 log("config.json settings successfully loaded.")
 
 # check we have the latest version
