@@ -103,8 +103,8 @@ profitMargin = float(data['profitMargin']) / 100
 stopLoss = float(data['stopLoss'])
 currentVersion = float(data['currentVersion'])
 endpoint = data['endpoint']
-tg_botname = print(data['tg_botname']),
-tg_watchgroup = print(data['tg_watchgroup']),
+#tg_botname = print(data['tg_botname']),
+#tg_watchgroup = print(data['tg_watchgroup']),
 tg_search = print(data['tg_search'])
 log("config.json settings successfully loaded.")
 
@@ -207,10 +207,10 @@ print("Investing amount in USD: {}".format(float_to_string((in_USD * AmountToSel
 log("Waiting for trading pair input.")
 
 #---
-tgclient = TelegramClient('"{}"'.format(tg_botname), tg_api_id, tg_api_hash)
-print('\nScouting telegram channel', tg_watchgroup, 'for coin...')
+tgclient = TelegramClient('"{}"'.format(data['tg_botname']), tg_api_id, tg_api_hash)
+print('\nScouting telegram channel', data['tg_watchgroup'], 'for coin...')
 
-@tgclient.on(events.NewMessage(chats=tg_watchgroup))
+@tgclient.on(events.NewMessage(chats=data['tg_watchgroup']))
 async def my_event_handler(event):
     global coin #define global variable outside this private space
     text = event.raw_text
