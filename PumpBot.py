@@ -103,10 +103,16 @@ profitMargin = float(data['profitMargin']) / 100
 stopLoss = float(data['stopLoss'])
 currentVersion = float(data['currentVersion'])
 endpoint = data['endpoint']
-#tg_botname = print(data['tg_botname']),
-#tg_watchgroup = print(data['tg_watchgroup']),
-tg_search = print(data['tg_search'])
+#tg_botname = data['tg_botname']),
+#tg_watchgroup = data['tg_watchgroup']),
+#tg_search = data['tg_search'])
 log("config.json settings successfully loaded.")
+
+f = open('config.json', )
+tgdata = json.load(f)
+#tg_botname = data['tg_botname']),
+#tg_watchgroup = data['tg_watchgroup']),
+#tg_search = data['tg_search'])
 
 # check we have the latest version
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -207,14 +213,14 @@ print("Investing amount in USD: {}".format(float_to_string((in_USD * AmountToSel
 log("Waiting for trading pair input.")
 
 #---
-tgclient = TelegramClient('"{}"'.format(data['tg_botname']), tg_api_id, tg_api_hash)
-print('\nScouting telegram channel', data['tg_watchgroup'], 'for coin...')
+tgclient = TelegramClient('"{}"'.format(tgdata['tg_botname']), tg_api_id, tg_api_hash)
+print('\nScouting telegram channel', tgdata['tg_watchgroup'], 'for coin...')
 
-@tgclient.on(events.NewMessage(chats=data['tg_watchgroup']))
+@tgclient.on(events.NewMessage(chats=tgdata['tg_watchgroup']))
 async def my_event_handler(event):
     global coin #define global variable outside this private space
     text = event.raw_text
-    match = re.search(rsearch, text)
+    match = re.search(r'(?<=#|:)(.*)', text) #how to do this with a variable ?
     if match:
         coin = match.group(1) #fill variable
         print ('Coin published:', coin) #temp
