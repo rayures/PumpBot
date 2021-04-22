@@ -220,7 +220,7 @@ print('\nScouting telegram channel', tgdata['tg_watchgroup'], 'for coin...')
 async def my_event_handler(event):
     global coin #define global variable outside this private space
     text = event.raw_text
-    match = re.search(r'(?<=#|:)(.*)', text) #how to do this with a variable ?
+    match = re.search(r'(?<=#|:)(\w*)', text) #how to do this with a variable ?
     if match:
         coin = match.group(1) #fill variable
         print ('Coin published:', coin) #temp
