@@ -210,7 +210,7 @@ print('''
 # wait until coin input
 print("\nInvesting amount for {}: {}".format(quotedCoin, float_to_string(AmountToSell)))
 print("Investing amount in USD: {}".format(float_to_string((in_USD * AmountToSell), 2)))
-log("Waiting for trading pair input.")
+#log("Waiting for trading pair input.")
 
 #---
 tgclient = TelegramClient('"{}"'.format(tgdata['tg_botname']), tg_api_id, tg_api_hash)
@@ -240,11 +240,11 @@ for ticker in averagePrices:
 # if average price fails then get the current price of the trading pair (backup in case average price fails)
 if averagePrice == 0: averagePrice = float(client.get_avg_price(symbol=tradingPair)['price'])
 
-log("Calculating amount of coin to buy.")
+#log("Calculating amount of coin to buy.")
 # calculate amount of coin to buy
 amountOfCoin = AmountToSell / float(averagePrice)
 
-log("Rounding amount of coin.")
+#log("Rounding amount of coin.")
 # rounding the coin amount to the specified lot size
 info = client.get_symbol_info(tradingPair)
 minQty = float(info['filters'][2]['stepSize'])
@@ -305,24 +305,26 @@ while not(orderCompleted):
 orderCompleted = False
 
 print('Buy order has been made!')
-log("Buy order successfully made.")
+#log("Buy order successfully made.")
 
 # once finished waiting for buy order we can process the sell order
 print('Processing sell order.')
-log("Processing sell order.")
+#log("Processing sell order.")
 
 # once bought we can get info of order
-log("Getting buy order information.")
+#log("Getting buy order information.")
+
+coinOrderInfo = order["fills"][0]
 # sometimes the order data takes a bit of time to update on their servers,
 # retrying until there is a first item.
 while not 0 < len(coinOrderInfo['items']):
-    print('not updated in server yet, retrying...')
+    print(str(datetime.datetime.now()),'not updated in server yet, retrying...')
     coinOrderInfo = order["fills"][0]
 
 coinPriceBought = float(coinOrderInfo['price'])
 coinOrderQty = float(coinOrderInfo['qty'])
 
-log("Calculate price to sell at and round.")
+#log("Calculate price to sell at and round.")
 # find price to sell coins at
 priceToSell = coinPriceBought * profitMargin
 # rounding sell price to correct dp
