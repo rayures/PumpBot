@@ -15,6 +15,7 @@ import urllib
 import os
 import ssl
 import time
+import datetime
 
 # UTILS
 def float_to_string(number, precision=10):
@@ -193,7 +194,7 @@ else:
     AmountToSell = manualQuoted
 
 # ensure wallet has BNB transaction fees
-log("Checking BNB balance if topup required.")
+#log("Checking BNB balance if topup required.")
 print("Checking BNB balance if topup required.")
 topupBNB(0.01, 0.02)
 
@@ -210,25 +211,25 @@ print('''
 # wait until coin input
 print("\nInvesting amount for {}: {}".format(quotedCoin, float_to_string(AmountToSell)))
 print("Investing amount in USD: {}".format(float_to_string((in_USD * AmountToSell), 2)))
-#log("Waiting for trading pair input.")
 
 #---
+
 tgclient = TelegramClient('"{}"'.format(tgdata['tg_botname']), tg_api_id, tg_api_hash)
-print('\nScouting telegram channel', tgdata['tg_watchgroup'], 'for coin...')
+print('\n',str(datetime.datetime.now()), 'Scouting telegram channel', tgdata['tg_watchgroup'], 'for coin...')
 
 @tgclient.on(events.NewMessage(chats=tgdata['tg_watchgroup']))
 async def my_event_handler(event):
     global coin #define global variable outside this private space
     text = event.raw_text
-    match = re.search(r'(?<=#|:)(\w*)', text) #how to do this with a variable ?
+    match = re.search(r'(?<=Buying #)(\w*)', text)
     if match:
         coin = match.group(1) #fill variable
-        print ('Coin published:', coin) #temp
+        print (str(datetime.datetime.now()),'Coin published:', coin) #temp
         await tgclient.disconnect() #disconnect client, wait for it. NOTE: --can this be done async?--
         
 tgclient.start()
 tgclient.run_until_disconnected()
-
+print (str(datetime.datetime.now()),'closed TG')
 tradingPair = coin.upper() + quotedCoin
 #---
 
@@ -240,11 +241,9 @@ for ticker in averagePrices:
 # if average price fails then get the current price of the trading pair (backup in case average price fails)
 if averagePrice == 0: averagePrice = float(client.get_avg_price(symbol=tradingPair)['price'])
 
-#log("Calculating amount of coin to buy.")
 # calculate amount of coin to buy
 amountOfCoin = AmountToSell / float(averagePrice)
 
-#log("Rounding amount of coin.")
 # rounding the coin amount to the specified lot size
 info = client.get_symbol_info(tradingPair)
 minQty = float(info['filters'][2]['stepSize'])
@@ -254,11 +253,9 @@ minPrice = float(info['filters'][0]['tickSize'])
 
 if buyLimit != 1:
     # rounding price to correct dp
-    log("Rounding price for coin.")
     averagePrice = float(averagePrice) * buyLimit
     averagePrice = float_to_string(averagePrice, int(- math.log10(minPrice)))
 
-    log("Attempt to create limit buy order.")
     try:
         # buy order
         order = client.order_limit_buy(
@@ -278,7 +275,6 @@ if buyLimit != 1:
         log("Unknown error has occured on buy order.")
         quitProgram()
 else:
-    log("Attempt to create market buy order")
     # do market order shit here
     try:
         order = client.order_market_buy(
@@ -298,33 +294,39 @@ else:
         quitProgram()
     
 # waits until the buy order has been confirmed
-print("Waiting for coin to buy...")
+print(str(datetime.datetime.now()),"Waiting for coin to buy...")
+starttime = time.time()
+timeout = 5
+
 while not(orderCompleted):
     pass
+    if time.time() - starttime > timeout:
+        print("break after", timeout, "s")
+        break
+
 # when order compelted reset to false for next order
 orderCompleted = False
 
-print('Buy order has been made!')
-#log("Buy order successfully made.")
+print(str(datetime.datetime.now()),'Buy order has been made!')
 
 # once finished waiting for buy order we can process the sell order
-print('Processing sell order.')
-#log("Processing sell order.")
+print(str(datetime.datetime.now()),'Processing sell order.')
 
-# once bought we can get info of order
-#log("Getting buy order information.")
-
-coinOrderInfo = order["fills"][0]
-# sometimes the order data takes a bit of time to update on their servers,
-# retrying until there is a first item.
-while not 0 < len(coinOrderInfo['items']):
-    print(str(datetime.datetime.now()),'not updated in server yet, retrying...')
-    coinOrderInfo = order["fills"][0]
+while True: 
+    try:
+       coinOrderInfo = order["fills"][0] 
+    except:
+        #retry
+        print(str(datetime.datetime.now()),'no buy order info available, retrying...')
+        continue
+    else:
+        #continue with script
+        print(str(datetime.datetime.now()),'got buy info, continue')
+        break
 
 coinPriceBought = float(coinOrderInfo['price'])
 coinOrderQty = float(coinOrderInfo['qty'])
 
-#log("Calculate price to sell at and round.")
 # find price to sell coins at
 priceToSell = coinPriceBought * profitMargin
 # rounding sell price to correct dp
@@ -332,7 +334,6 @@ roundedPriceToSell = float_to_string(priceToSell, int(- math.log10(minPrice)))
 
 # get stop price
 stopPrice = float_to_string(stopLoss * coinPriceBought, int(- math.log10(minPrice)))
-log("Attempting to create sell order.")
 try:
     # oco order (with stop loss)
     order = client.create_oco_order(
@@ -361,24 +362,12 @@ except Exception as d:
     marketSell(coinOrderQty)
     quitProgram()
 
-print('Sell order has been made!')
-log("Sell order successfully made.")
-# open binance page to trading pair
-webbrowser.open('https://www.binance.com/en/trade/' + tradingPair)
+sleeptime=30
+print(str(datetime.datetime.now()),'Sell order has been made!')
+print(str(datetime.datetime.now()),'restarting bot in', sleeptime, 's')
 
-print("Waiting for sell order to be completed...")
-while not(orderCompleted):
-    pass
-print("Sell order has been filled!")
-log("Sell order has been filled.")
+from time import sleep
+sleep(sleeptime)
 
-newQuotedBalance = float(client.get_asset_balance(asset=quotedCoin)['free'])
-profit = newQuotedBalance - QuotedBalance
-print("Profit made: " + str(profit))
-log("Profit made: " + str(profit))
-
-# wait for Enter to close
-input("\nPress Enter to Exit...")
-
-# quit
-quitProgram()
+sys.stdout.flush()
+os.execv(sys.executable, ['python3'] + sys.argv)
